@@ -1,6 +1,7 @@
 #include "test_assert.h"
 #include "test_buffer.h"
 #include "test_edit.h"
+#include "test_syntax_highlight.h"
 #include <ctime>
 
 #if defined(MEMORY_LEAK_TRACKING) && defined(_MSC_VER)
@@ -36,6 +37,7 @@ int main(int /*argc*/, const char* /*argv*/[])
   auto tic = std::clock();
   run_buffer_tests();  
   run_edit_tests();
+  run_syntax_highlight_tests();
   auto toc = std::clock();
 
   if (!testing_fails) 

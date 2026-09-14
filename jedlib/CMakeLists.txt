@@ -6,6 +6,7 @@ buffer.h
 edit.h
 file_utils.h
 namespace.h
+syntax_highlight.h
 utf8.h
 utils.h
 )
@@ -14,6 +15,7 @@ set(SRCS
 buffer.cpp
 edit.cpp
 file_utils.cpp
+syntax_highlight.cpp
 utils.cpp
 )
 
@@ -35,4 +37,3 @@ target_include_directories(jedlib
 target_link_libraries(jedlib
     PUBLIC
     )
-	

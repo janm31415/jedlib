@@ -5,6 +5,7 @@ set(HDRS
 test_assert.h
 test_buffer.h
 test_edit.h
+test_syntax_highlight.h
 )
 	
 set(SRCS
@@ -12,6 +13,7 @@ test.cpp
 test_assert.cpp
 test_buffer.cpp
 test_edit.cpp
+test_syntax_highlight.cpp
 )
 
 # general build definitions
@@ -33,3 +35,6 @@ target_link_libraries(jedlib.tests
     PRIVATE   
     jedlib 
     )
+
+add_custom_command(TARGET jedlib.tests POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/../jedlib/jedlib_syntax.json" "$<TARGET_FILE_DIR:jedlib.tests>/jedlib_syntax.json")
