@@ -1,4 +1,4 @@
-﻿#include "test_buffer.h"
+#include "test_buffer.h"
 #include "test_assert.h"
 
 #include "jedlib/buffer.h"
@@ -51,8 +51,13 @@ void test_BufferLineLength() {
   }
 
 void test_BufferLineLengthUnicoded() {
-  line ln = make_line("aÏ€bc");
-  EXPECT_EQ(4, line_length(ln));
+  std::string s;
+  s.push_back('a');
+  s.push_back(0xcf);//CF 80 is utf8 for pi
+  s.push_back(0x80);
+  s.push_back('c');
+  line ln = make_line(s);
+  EXPECT_EQ(3, line_length(ln));
   }
 
 void test_BufferTestsFailRead() {
