@@ -135,7 +135,7 @@ void _treat_buffer(std::string& buff, std::vector<token>& tokens, const char*& s
           std::string filename = buff.substr(i + 1);
           if (filename.empty())
           {
-            while (ignore_character(*s))
+            while (s < s_end && ignore_character(*s))
               ++s;
             if (s != s_end && *s == '"')
             {
@@ -629,6 +629,85 @@ struct address {
   bool null_selection;
 };
 
+int64_t clamp_int64(int64_t value, int64_t lo, int64_t hi)
+{
+  if (value < lo)
+    return lo;
+  if (value > hi)
+    return hi;
+  return value;
+}
+
+/*
+Any regular expression coming from user input can be invalid, or can blow up the
+regex engine (complexity, stack depth, ...). All regex usage therefore goes via
+these helpers so that we always report a controlled error instead of crashing.
+*/
+std::regex make_regex(const std::string& re)
+{
+  try
+  {
+    return std::regex(re, std::regex_constants::ECMAScript);
+  }
+  catch (const std::regex_error& e)
+  {
+    throw_error(invalid_regex, e.what());
+  }
+  catch (const std::exception& e)
+  {
+    throw_error(invalid_regex, e.what());
+  }
+  return std::regex();
+}
+
+bool safe_regex_search(const std::string& line, std::smatch& sm, const std::regex& reg)
+{
+  try
+  {
+    return std::regex_search(line, sm, reg);
+  }
+  catch (const std::regex_error& e)
+  {
+    throw_error(invalid_regex, e.what());
+  }
+  catch (const std::exception& e)
+  {
+    throw_error(invalid_regex, e.what());
+  }
+  return false;
+}
+
+/*
+Collects the matches of reg in line. Zero length matches are kept, as they are
+meaningful for commands such as x and s.
+*/
+std::vector<std::pair<int64_t, int64_t>> safe_regex_matches(const std::string& line, const std::regex& reg)
+{
+  std::vector<std::pair<int64_t, int64_t>> out;
+  try
+  {
+    auto it = std::sregex_iterator(line.begin(), line.end(), reg);
+    auto it_end = std::sregex_iterator();
+    for (; it != it_end; ++it)
+    {
+      const int64_t p1 = (int64_t)it->position(0);
+      const int64_t p2 = p1 + (int64_t)it->length(0);
+      if (p1 < 0)
+        continue;
+      out.emplace_back(p1, p2);
+    }
+  }
+  catch (const std::regex_error& e)
+  {
+    throw_error(invalid_regex, e.what());
+  }
+  catch (const std::exception& e)
+  {
+    throw_error(invalid_regex, e.what());
+  }
+  return out;
+}
+
 address find_regex_range(std::string re, file_buffer fb, bool reverse, position starting_pos)
 {
   address r;
@@ -639,64 +718,92 @@ address find_regex_range(std::string re, file_buffer fb, bool reverse, position 
     return r;
   }
   
+  std::regex reg = make_regex(re);
+  const int64_t nr_rows = (int64_t)fb.content.size();
+  
   if (reverse)
   {
     r.p1 = r.p2 = position(0, 0);
-    std::regex reg(re);
-    for (int64_t row = starting_pos.row; row >= 0; --row) {
+    for (int64_t row = clamp_int64(starting_pos.row, 0, nr_rows - 1); row >= 0; --row) {
       std::string line = to_string(fb.content[row]);
-      std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
-        for (int i = (int)sm.size()-1; i >= 0; --i) {
-          int64_t p1 = sm.position(i);
-          int64_t p2 = p1 + sm.length(i);
-          if (row == starting_pos.row && p2 > starting_pos.col)
-            continue;
-          r.p1.row = row;
-          r.p1.col = p1;
-          r.p2.row = row;
-          r.p2.col = p2-1;
-          if (sm.length(i)==0) {
-            r.p2.col = p2;
-            r.null_selection = true;
-          } else
-            r.null_selection = false;
-          return r;
-        }
+      const int64_t max_col = (row == starting_pos.row) ? clamp_int64(starting_pos.col, 0, (int64_t)line.size()) : (int64_t)line.size();
+      auto matches = safe_regex_matches(line, reg);
+      for (auto it = matches.rbegin(); it != matches.rend(); ++it) {
+        if (it->second > max_col)
+          continue;
+        r.p1.row = row;
+        r.p1.col = it->first;
+        r.p2.row = row;
+        r.p2.col = it->second - 1;
+        if (it->second == it->first) {
+          r.p2.col = it->second;
+          r.null_selection = true;
+        } else
+          r.null_selection = false;
+        return r;
       }
     }
   } else
   {
-    r.p1 = r.p2 = position(fb.content.size()-1, 0);
+    r.p1 = r.p2 = position(nr_rows - 1, 0);
     if (!fb.content[r.p1.row].empty()) {
-      r.p1.col = fb.content[r.p1.row].size()-1;
-      r.p2.col = fb.content[r.p1.row].size()-1;
+      r.p1.col = (int64_t)fb.content[r.p1.row].size() - 1;
+      r.p2.col = (int64_t)fb.content[r.p1.row].size() - 1;
     }
-    std::regex reg(re);
-    for (int64_t row = starting_pos.row; row < fb.content.size(); ++row) {
+    for (int64_t row = clamp_int64(starting_pos.row, 0, nr_rows - 1); row < nr_rows; ++row) {
       std::string line = to_string(fb.content[row]);
-      std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
-        for (int i = 0; i < (int)sm.size(); ++i) {
-          int64_t p1 = sm.position(i);
-          int64_t p2 = p1 + sm.length(i);
-          if (row == starting_pos.row && p1 < starting_pos.col)
-            continue;
-          r.p1.row = row;
-          r.p1.col = p1;
-          r.p2.row = row;
-          r.p2.col = p2-1;
-          if (sm.length(i)==0) {
-            r.p2.col = p2;
-            r.null_selection = true;
-          } else
-            r.null_selection = false;
-          return r;
-        }
+      const int64_t min_col = (row == starting_pos.row) ? clamp_int64(starting_pos.col, 0, (int64_t)line.size()) : 0;
+      auto matches = safe_regex_matches(line, reg);
+      for (const auto& m : matches) {
+        if (m.first < min_col)
+          continue;
+        r.p1.row = row;
+        r.p1.col = m.first;
+        r.p2.row = row;
+        r.p2.col = m.second - 1;
+        if (m.second == m.first) {
+          r.p2.col = m.second;
+          r.null_selection = true;
+        } else
+          r.null_selection = false;
+        return r;
       }
     }
   }  
   return r;
+}
+
+/*
+Returns the part of row that lies inside the dot. Returns false if this row
+should be skipped. The returned offset is the column in the row corresponding
+with the first character of line.
+The flag exclusive_end mimicks the 'else if' behaviour that some commands use:
+when the row is both the first and the last row of the dot, the dot end is not
+taken into account.
+The flag allow_empty indicates whether an empty result is acceptable.
+*/
+bool get_line_in_dot(const file_buffer& fb, int64_t row, const std::pair<position, position>& dot, bool exclusive_end, bool allow_empty, std::string& line, int64_t& offset)
+{
+  offset = 0;
+  if (row < 0 || row >= (int64_t)fb.content.size())
+    return false;
+  line = to_string(fb.content[row]);
+  bool clipped_front = false;
+  if (row == dot.first.row) {
+    offset = clamp_int64(dot.first.col, 0, (int64_t)line.size());
+    line = line.substr(offset);
+    clipped_front = true;
+  }
+  if (row == dot.second.row && !(exclusive_end && clipped_front)) {
+    const int64_t sz = dot.second.col - offset;
+    if (sz < 0)
+      return false;
+    if (sz == 0 && !allow_empty)
+      return false;
+    if (sz < (int64_t)line.size())
+      line = line.substr(0, sz);
+  }
+  return true;
 }
 
 position recompute_position_after_erase(file_buffer fb, position pos, position erase_p1, position erase_p2) {
@@ -842,6 +949,11 @@ struct simple_address_handler
     address r;
     r.p1 = starting_pos;
     r.p2 = starting_pos;
+    if (f.content.empty()) {
+      r.p1 = r.p2 = position(0, 0);
+      r.null_selection = true;
+      return r;
+    }
     if (reverse) {
       r.p1.row -= ln.value;
       r.p2.row -= ln.value;
@@ -1017,26 +1129,18 @@ struct command_handler
   }
   
   file_buffer operator() (const Cmd_g& cmd) {
-    std::regex reg(cmd.regexp.regexp);
+    std::regex reg = make_regex(cmd.regexp.regexp);
     auto dot = get_dot();
         
     for (int64_t row = dot.first.row; row <= dot.second.row; ++row) {
-      if (row >= fb.content.size())
+      if (row >= (int64_t)fb.content.size())
         break;
-      std::string line = to_string(fb.content[row]);
+      std::string line;
       int64_t offset = 0;
-      if (row == dot.first.row) {
-        line = line.substr(dot.first.col);
-        offset = dot.first.col;
-        }
-      if (row == dot.second.row) {
-        const int64_t sz = dot.second.col - offset;
-        if (sz <= 0)
-          continue;
-        line = line.substr(0, sz);
-      }
+      if (!get_line_in_dot(fb, row, dot, false, false, line, offset))
+        continue;
       std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
+      if (safe_regex_search(line, sm, reg)) {
         fb = std::visit(*this, cmd.cmd.front());
         return fb;
       }
@@ -1118,26 +1222,18 @@ struct command_handler
   }
   
   file_buffer operator() (const Cmd_s& cmd) {
-    std::regex reg(cmd.regexp.regexp);
+    std::regex reg = make_regex(cmd.regexp.regexp);
     auto dot = get_dot();
         
     for (int64_t row = dot.first.row; row <= dot.second.row; ++row) {
-      if (row >= fb.content.size())
+      if (row >= (int64_t)fb.content.size())
         break;
-      std::string line = to_string(fb.content[row]);
+      std::string line;
       int64_t offset = 0;
-      if (row == dot.first.row) {
-        line = line.substr(dot.first.col);
-        offset = dot.first.col;
-        }
-      else if (row == dot.second.row) {
-        const int64_t sz = dot.second.col - offset;
-        if (sz <= 0)
-          continue;
-        line = line.substr(0, sz);
-      }
+      if (!get_line_in_dot(fb, row, dot, true, false, line, offset))
+        continue;
       std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
+      if (safe_regex_search(line, sm, reg)) {
 
         int64_t pos1 = sm.position(0);
         int64_t pos2 = pos1 + sm.length(0);
@@ -1179,26 +1275,18 @@ struct command_handler
   }
   
   file_buffer operator() (const Cmd_v& cmd) {
-    std::regex reg(cmd.regexp.regexp);
+    std::regex reg = make_regex(cmd.regexp.regexp);
     auto dot = get_dot();
         
     for (int64_t row = dot.first.row; row <= dot.second.row; ++row) {
-      if (row >= fb.content.size())
+      if (row >= (int64_t)fb.content.size())
         break;
-      std::string line = to_string(fb.content[row]);
+      std::string line;
       int64_t offset = 0;
-      if (row == dot.first.row) {
-        line = line.substr(dot.first.col);
-        offset = dot.first.col;
-        }
-      if (row == dot.second.row) {
-        const int64_t sz = dot.second.col - offset;
-        if (sz <= 0)
-          continue;
-        line = line.substr(0, sz);
-      }
+      if (!get_line_in_dot(fb, row, dot, false, false, line, offset))
+        continue;
       std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
+      if (safe_regex_search(line, sm, reg)) {
         return fb;
       }
     }
@@ -1220,27 +1308,19 @@ struct command_handler
     bool save_undo_backup = save_undo;
     save_undo = false;
     
-    std::regex reg(cmd.regexp.regexp);
+    std::regex reg = make_regex(cmd.regexp.regexp);
     auto dot = get_dot();
         
         
     for (int64_t row = dot.first.row; row <= dot.second.row; ++row) {
-      if (row >= fb.content.size())
+      if (row >= (int64_t)fb.content.size())
         break;
-      std::string line = to_string(fb.content[row]);
+      std::string line;
       int64_t offset = 0;
-      if (row == dot.first.row) {
-        line = line.substr(dot.first.col);
-        offset = dot.first.col;
-        }
-      if (row == dot.second.row) {
-        const int64_t sz = dot.second.col - offset;
-        if (sz < 0)
-          continue;
-        line = line.substr(0, sz);
-      }
+      if (!get_line_in_dot(fb, row, dot, false, true, line, offset))
+        continue;
       std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
+      if (safe_regex_search(line, sm, reg)) {
         int64_t pos1 = sm.position(0);
         int64_t pos2 = pos1 + sm.length(0);
         if (pos2 > pos1)
@@ -1283,28 +1363,20 @@ struct command_handler
     bool save_undo_backup = save_undo;
     save_undo = false;
 
-    std::regex reg(cmd.regexp.regexp);
+    std::regex reg = make_regex(cmd.regexp.regexp);
     auto dot = get_dot();
 
     position prev_dot_end = position(0, 0);
 
     for (int64_t row = dot.first.row; row <= dot.second.row; ++row) {
-      if (row >= fb.content.size())
+      if (row >= (int64_t)fb.content.size())
         break;
-      std::string line = to_string(fb.content[row]);
+      std::string line;
       int64_t offset = 0;
-      if (row == dot.first.row) {
-        line = line.substr(dot.first.col);
-        offset = dot.first.col;
-        }
-      if (row == dot.second.row) {
-        const int64_t sz = dot.second.col - offset;
-        if (sz < 0)
-          continue;
-        line = line.substr(0, sz);
-        }
+      if (!get_line_in_dot(fb, row, dot, false, true, line, offset))
+        continue;
       std::smatch sm;
-      if (std::regex_search(line, sm, reg)) {
+      if (safe_regex_search(line, sm, reg)) {
         int64_t pos1 = sm.position(0);
         int64_t pos2 = pos1 + sm.length(0);
         if (pos2 > pos1)
