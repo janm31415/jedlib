@@ -1,4 +1,5 @@
 #pragma once
+#include "namespace.h"
 #include <stdexcept>
 #include <immutable/vector.h>
 #include <vector>
@@ -6,6 +7,7 @@
 #include <optional>
 #include <stdint.h>
 
+JEDLIB_BEGIN
 
 typedef immutable::vector<wchar_t, false, 5> line;
 typedef immutable::vector<immutable::vector<wchar_t, false, 5>, false, 5> text;
@@ -38,7 +40,7 @@ struct position
 
   bool operator <= (const position& other) const
     {
-    return (*this < other) | (*this == other);
+    return (*this < other) || (*this == other);
     }
 
   bool operator > (const position& other) const
@@ -251,3 +253,5 @@ std::wstring read_next_word(line::const_iterator it, line::const_iterator it_end
 position get_indentation_at_row(file_buffer fb, int64_t row);
 
 std::string get_row_indentation_pattern(file_buffer fb, position pos);
+
+JEDLIB_END

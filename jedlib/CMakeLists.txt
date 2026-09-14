@@ -1,17 +1,18 @@
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HDRS
 buffer.h
+edit.h
 file_utils.h
 namespace.h
 utf8.h
 utils.h
 )
-	
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SRCS
 buffer.cpp
+edit.cpp
 file_utils.cpp
 utils.cpp
 )

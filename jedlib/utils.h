@@ -1,10 +1,12 @@
 #pragma once
 
+#include "namespace.h"
+
 #include <string>
 #include <stdint.h>
 #include <vector>
 
-std::string get_file_in_executable_path(const std::string& filename);
+JEDLIB_BEGIN
 
 uint16_t ascii_to_utf16(unsigned char ch);
 uint16_t ascii437_to_utf16(unsigned char ch);
@@ -19,3 +21,5 @@ std::vector<std::wstring> break_string(std::string in);
 
 std::wstring convert_string_to_wstring(const std::string& str);
 std::string convert_wstring_to_string(const std::wstring& str);
+
+JEDLIB_END

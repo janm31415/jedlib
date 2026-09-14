@@ -1,6 +1,6 @@
 #pragma once
 
-#define IMAGE_BEGIN namespace jkit { namespace imagelib {
-#define IMAGE_END } }
-#define IMAGE ::jkit::imagelib
+#define JEDLIB_BEGIN namespace jedlib {
+#define JEDLIB_END }
+#define JEDLIB ::jedlib
 

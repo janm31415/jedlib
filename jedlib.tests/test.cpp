@@ -1,5 +1,6 @@
 #include "test_assert.h"
 #include "test_buffer.h"
+#include "test_edit.h"
 #include <ctime>
 
 int main(int /*argc*/, const char* /*argv*/[])
@@ -8,6 +9,7 @@ int main(int /*argc*/, const char* /*argv*/[])
 
   auto tic = std::clock();
   run_buffer_tests();  
+  //run_edit_tests();
   auto toc = std::clock();
 
   if (!testing_fails) 

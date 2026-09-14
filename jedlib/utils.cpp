@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <set>
 
+JEDLIB_BEGIN
+
 namespace
 {
 
@@ -327,3 +329,5 @@ std::string convert_wstring_to_string(const std::wstring& str)
   utf8::utf16to8(str.begin(), str.end(), std::back_inserter(out));
   return out;
   }
+
+JEDLIB_END

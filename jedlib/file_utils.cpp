@@ -9,7 +9,9 @@
 #include <limits.h>
 #endif
 
-std::filesystem::path getExecutablePath()
+JEDLIB_BEGIN
+
+std::filesystem::path get_executable_path()
 {
 #if defined(_WIN32)
   wchar_t buffer[MAX_PATH];
@@ -42,14 +44,14 @@ std::filesystem::path getExecutablePath()
 #endif
 }
 
-std::filesystem::path getExecutableFolder()
+std::filesystem::path get_executable_folder()
 {
-  return getExecutablePath().parent_path();
+  return get_executable_path().parent_path();
 }
 
 
 std::string get_file_in_executable_path(const std::string& filename) {
-  std::filesystem::path path = getExecutableFolder() / filename;
+  std::filesystem::path path = get_executable_folder() / filename;
   return path.string();
 }
 
@@ -133,3 +135,5 @@ std::vector<std::string> get_files_from_directory(const std::string& d, bool inc
 
   return files;
   }
+
+JEDLIB_END

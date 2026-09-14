@@ -1,13 +1,17 @@
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HDRS
 test_assert.h
 test_buffer.h
+test_edit.h
 )
 	
 set(SRCS
 test.cpp
 test_assert.cpp
 test_buffer.cpp
+test_edit.cpp
 )
 
 # general build definitions

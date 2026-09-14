@@ -1,9 +1,13 @@
 #include "buffer.h"
-#include "file_utils.h"
+
 #include <fstream>
 
-#include "utils.h"
+#include "file_utils.h"
 #include "utf8.h"
+
+#include "utils.h"
+
+JEDLIB_BEGIN
 
 file_buffer make_empty_buffer()
   {
@@ -183,27 +187,32 @@ position get_actual_position(file_buffer fb, position pos)
     return out;
   if (out.row >= fb.content.size())
     {
-    assert(fb.content.empty());
-    out.col = out.row = 0;
+    if (fb.content.empty()) {
+      out.col = out.row = 0;
+      }
+    else {
+      out.row = fb.content.size()-1;
+      out.col = fb.content[out.row].size();
+      }
     return out;
     }
-  if (out.col >= static_cast<int64_t>(fb.content[out.row].size()))
+  if (out.col >= fb.content[out.row].size())
     {
-    if (out.row == static_cast<int64_t>(fb.content.size()) - 1) // last row
+    if (out.row == fb.content.size() - 1) // last row
       {
       if (!fb.content.back().empty())
         {
         if (fb.content.back().back() == L'\n')
-          out.col = static_cast<int64_t>(fb.content[out.row].size()) - 1;
+          out.col = fb.content[out.row].size() - 1;
         else
-          out.col = static_cast<int64_t>(fb.content[out.row].size());
+          out.col = fb.content[out.row].size();
         }
       else
-        out.col = static_cast<int64_t>(fb.content[out.row].size());
+        out.col = fb.content[out.row].size();
       }
     else
       {
-      out.col = static_cast<int64_t>(fb.content[out.row].size()) - 1;
+      out.col = (int64_t)fb.content[out.row].size() - 1;
       if (out.col < 0)
         out.col = 0;
       }
@@ -521,13 +530,14 @@ int64_t get_x_position(file_buffer fb, const env_settings& s)
 
 file_buffer insert(file_buffer fb, std::wstring wtxt, const env_settings& s, bool save_undo)
   {
-  if (wtxt.empty())
-    return fb;
   if (save_undo)
     fb = push_undo(fb);
 
   if (has_nontrivial_selection(fb, s))
     fb = erase(fb, s, false);
+
+  if (wtxt.empty())
+    return fb;
 
   if (has_rectangular_selection(fb))
     return insert_rectangular(fb, wtxt, s, false);
@@ -574,9 +584,13 @@ file_buffer insert(file_buffer fb, std::wstring wtxt, const env_settings& s, boo
       auto first_part = fb.content[pos.row].take(pos.col);
       auto second_part = fb.content[pos.row].drop(pos.col);
       fb.content = fb.content.set(pos.row, first_part.insert(pos.col, input));
-      fb.content = fb.content.insert(pos.row + 1, second_part);
-      fb.lex = fb.lex.insert(pos.row + 1, lexer_normal);
-      ++fb.pos.row;
+      if (!second_part.empty()) {
+        fb.content = fb.content.insert(pos.row + 1, second_part);
+        }
+      if (fb.pos.row < fb.content.size()) {
+        fb.lex = fb.lex.insert(pos.row + 1, lexer_normal);
+        ++fb.pos.row;
+        }
       fb.pos.col = 0;
       pos = fb.pos;
       ++nr_of_lines_inserted;
@@ -1321,7 +1335,7 @@ file_buffer find_text_case_insensitive(file_buffer fb, text txt)
     pos = *fb.start_selection;
   if (pos == lastpos)
     pos.col = pos.row = 0;
-  pos = get_actual_position(fb, pos);  
+  pos = get_actual_position(fb, pos);
   wchar_t first_text_char = tolower(txt[text_pos.row][text_pos.col]);
   while (pos != lastpos)
     {
@@ -1766,3 +1780,5 @@ std::string get_row_indentation_pattern(file_buffer fb, position pos)
     }
   return out;
   }
+
+JEDLIB_END

@@ -27,9 +27,11 @@ DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
-
 #include <iterator>
 #include <stdexcept>
+#include "namespace.h"
+
+JEDLIB_BEGIN
 
 namespace utf8
   {
@@ -816,3 +818,5 @@ namespace utf8
 
     } // namespace utf8::unchecked
   } // namespace utf8 
+
+JEDLIB_END
