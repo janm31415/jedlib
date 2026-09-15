@@ -235,6 +235,19 @@ uint32_t character_width(uint32_t character, int64_t x_pos, const env_settings& 
     default: return 1;
     }
   }
+  
+int64_t line_length(line ln, const env_settings& s)
+  {
+  int64_t length = 0;
+  int64_t col = 0;
+  for (int64_t i = 0; i < ln.size(); ++i)
+    {
+    uint32_t w = character_width(ln[i], col, s);
+    length += w;
+    col += w;
+    }
+  return length;
+  }  
 
 int64_t line_length_up_to_column(line ln, int64_t column, const env_settings& s)
   {

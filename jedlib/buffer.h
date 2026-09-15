@@ -97,6 +97,8 @@ struct env_settings
 
 uint32_t character_width(uint32_t character, int64_t x_pos, const env_settings& s);
 
+int64_t line_length(line ln, const env_settings& s);
+
 int64_t line_length_up_to_column(line ln, int64_t column, const env_settings& s);
 
 int64_t get_col_from_line_length(line ln, int64_t length, const env_settings& s);
