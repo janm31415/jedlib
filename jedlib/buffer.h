@@ -91,6 +91,7 @@ struct file_buffer
 struct env_settings
   {
   int tab_space;
+  bool use_spaces_for_tab;
   bool show_all_characters;
   bool perform_syntax_highlighting;
   };

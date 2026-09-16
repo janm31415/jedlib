@@ -14,6 +14,7 @@ namespace {
   env_settings make_settings() {
     env_settings s{};
     s.tab_space = 4;
+    s.use_spaces_for_tab = true;
     s.show_all_characters = false;
     s.perform_syntax_highlighting = false;
     return s;
