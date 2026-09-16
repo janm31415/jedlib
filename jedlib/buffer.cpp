@@ -538,6 +538,7 @@ namespace
 
 int64_t get_x_position(file_buffer fb, const env_settings& s)
   {
+  //return fb.content.empty() || fb.pos.row >= fb.content.size() ? 0 : line_length_up_to_column(fb.content[fb.pos.row], fb.pos.col - 1, s);
   return fb.content.empty() ? 0 : line_length_up_to_column(fb.content[fb.pos.row], fb.pos.col - 1, s);
   }
 
@@ -597,9 +598,7 @@ file_buffer insert(file_buffer fb, std::wstring wtxt, const env_settings& s, boo
       auto first_part = fb.content[pos.row].take(pos.col);
       auto second_part = fb.content[pos.row].drop(pos.col);
       fb.content = fb.content.set(pos.row, first_part.insert(pos.col, input));
-      if (!second_part.empty()) {
-        fb.content = fb.content.insert(pos.row + 1, second_part);
-        }
+      fb.content = fb.content.insert(pos.row + 1, second_part);
       if (fb.pos.row < fb.content.size()) {
         fb.lex = fb.lex.insert(pos.row + 1, lexer_normal);
         ++fb.pos.row;
