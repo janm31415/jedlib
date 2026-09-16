@@ -276,6 +276,11 @@ int64_t get_col_from_line_length(line ln, int64_t length, const env_settings& s)
     }
   return out;
   }
+  
+bool in_selection(file_buffer fb, position current, const env_settings& s) {
+  position cursor = get_actual_position(fb);
+  return in_selection(fb, current, cursor, fb.pos, fb.start_selection, fb.rectangular_selection, s);
+}
 
 bool in_selection(file_buffer fb, position current, position cursor, position buffer_pos, std::optional<position> start_selection, bool rectangular, const env_settings& s)
   {

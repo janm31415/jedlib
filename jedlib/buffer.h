@@ -108,6 +108,8 @@ int64_t get_x_position(file_buffer fb, const env_settings& s);
 
 bool in_selection(file_buffer fb, position current, position cursor, position buffer_pos, std::optional<position> start_selection, bool rectangular, const env_settings& s);
 
+bool in_selection(file_buffer fb, position current, const env_settings& s);
+
 bool has_selection(file_buffer fb);
 
 bool has_multiline_selection(file_buffer fb);
