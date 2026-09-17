@@ -135,5 +135,10 @@ std::vector<std::string> get_files_from_directory(const std::string& d, bool inc
 
   return files;
   }
+  
+std::string get_extension(const std::string& filename) {
+  std::string ext = std::filesystem::u8path(filename).extension().u8string();
+  return ext;
+}
 
 JEDLIB_END

@@ -18,5 +18,6 @@ bool is_directory(const std::string& directory);
 std::vector<std::string> get_files_from_directory(const std::string& d, bool include_subfolders);
 std::vector<std::string> get_subdirectories_from_directory(const std::string& d, bool include_subfolders);
 std::string get_filename(const std::string& path);
+std::string get_extension(const std::string& filename);
 
 JEDLIB_END
