@@ -1721,6 +1721,8 @@ position find_corresponding_token(file_buffer fb, position tokenpos, int64_t min
     case L'}':  corresponding_token = L'{'; forward = false;  break;
     case L'[':  corresponding_token = L']'; break;
     case L']':  corresponding_token = L'['; forward = false;  break;
+    case L'<':  corresponding_token = L'>'; break;
+    case L'>':  corresponding_token = L'<'; forward = false;  break;
     }
   if (corresponding_token == 0)
     return position(-1, -1);
