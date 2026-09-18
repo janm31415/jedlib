@@ -819,6 +819,38 @@ void test_BufferFindText() {
   file_buffer unchanged = find_text(buf, text());
   EXPECT_TRUE(position(0, 0) == unchanged.pos);
   }
+  
+void test_BufferFindTextReverse() {
+  file_buffer buf = make_buffer();
+  buf.pos = position(10, 0);
+
+  file_buffer found = find_text_reverse(buf, std::string("nobody"));
+  EXPECT_TRUE(position(1, 8) == *found.start_selection);
+  EXPECT_TRUE(position(1, 13) == found.pos);
+  
+  found = find_text_reverse(found, std::string("nobody"));
+  EXPECT_TRUE(position(0, 4) == *found.start_selection);
+  EXPECT_TRUE(position(0, 9) == found.pos);
+  
+  found = find_text_reverse(found, std::string("nobody"));
+  EXPECT_TRUE(found.start_selection == std::nullopt);
+  EXPECT_TRUE(position(0, 0) == found.pos);
+  
+  found = find_text_reverse(found, std::string("nobody"));
+  EXPECT_TRUE(position(1, 8) == *found.start_selection);
+  EXPECT_TRUE(position(1, 13) == found.pos);
+  
+/*
+  file_buffer found_w = find_text(buf, std::wstring(L"nobody"));
+  EXPECT_TRUE(position(0, 4) == *found_w.start_selection);
+
+  file_buffer not_found = find_text(buf, std::string("nothing to find here"));
+  EXPECT_TRUE(get_last_position(buf) == not_found.pos);
+  EXPECT_TRUE(!not_found.start_selection.has_value());
+
+  file_buffer unchanged = find_text(buf, text());
+  EXPECT_TRUE(position(0, 0) == unchanged.pos);*/
+  }
 
 void test_BufferFindTextCaseInsensitive() {
   file_buffer buf = make_buffer();
@@ -1065,6 +1097,7 @@ void run_buffer_tests() {
   test_BufferValidPosition();
   test_BufferFindNextOccurence();
   test_BufferFindText();
+  test_BufferFindTextReverse();
   test_BufferFindTextCaseInsensitive();
   test_BufferReadNextWord();
   test_BufferFindCorrespondingToken();

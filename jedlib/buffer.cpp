@@ -1250,33 +1250,7 @@ position find_previous_occurence(text txt, position starting_pos, text txt_to_fi
   }
   
 position find_previous_occurence(text txt, position starting_pos, const std::wstring& wtxt_to_find) {
-#if 1
   return find_previous_occurence(txt, starting_pos, to_text(wtxt_to_find));
-#else
-  position lastpos = get_last_position(txt);
-  position firstpos = position(0, 0);
-  position pos = starting_pos;
-  while (pos != firstpos) {
-    pos = get_previous_position(txt, pos);
-    bool found = true;
-    position tmp = pos;
-    for (int j = 0; j < wtxt_to_find.size(); ++j) {
-      if (tmp == lastpos) {
-        found = false;
-        break;
-        }
-      const wchar_t current_char = txt[tmp.row][tmp.col];
-      if (current_char != wtxt_to_find[j]) {
-        found = false;
-        break;
-        }
-      tmp = get_next_position(txt, tmp);
-      }
-    if (found)
-      return pos;
-    }
-  return position(-1, -1);
-#endif
   }
   
 position find_next_occurence(text txt, position starting_pos, text txt_to_find) {
@@ -1312,32 +1286,7 @@ position find_next_occurence(text txt, position starting_pos, text txt_to_find) 
   }  
 
 position find_next_occurence(text txt, position starting_pos, const std::wstring& wtxt_to_find) {
-#if 1
   return find_next_occurence(txt, starting_pos, to_text(wtxt_to_find));
-#else
-  position lastpos = get_last_position(txt);
-  position pos = starting_pos;
-  while (pos != lastpos) {
-    bool found = true;
-    position tmp = pos;
-    for (int j = 0; j < wtxt_to_find.size(); ++j) {
-      if (tmp == lastpos) {
-        found = false;
-        break;
-        }
-      const wchar_t current_char = txt[tmp.row][tmp.col];
-      if (current_char != wtxt_to_find[j]) {
-        found = false;
-        break;
-        }
-      tmp = get_next_position(txt, tmp);
-      }
-    if (found)
-      return pos;
-    pos = get_next_position(txt, pos);
-    }
-  return position(-1, -1);
-#endif
   }
 
 position find_next_occurence(text txt, position starting_pos, wchar_t ch) {
@@ -1356,18 +1305,66 @@ position find_next_occurence(text txt, position starting_pos, wchar_t ch) {
 position find_next_occurence(file_buffer fb, position starting_pos, wchar_t ch) {
   return find_next_occurence(fb.content, starting_pos, ch);
   }
-
-file_buffer find_text(file_buffer fb, text txt)
+  
+file_buffer find_text_reverse(file_buffer fb, text txt)
   {
-  #if 0
   if (txt.empty())
     return fb;
   if (fb.content.empty())
     return fb;
   fb.rectangular_selection = false;
-  position lastpos = get_last_position(fb);
+  position firstpos = position(-1, -1);
   position pos = fb.pos;
-  #else
+  position text_pos(0, 0);
+  position lasttext = get_last_position(txt);
+  position lastfb = get_last_position(fb);
+  if (has_selection(fb) && fb.start_selection < pos) {
+    pos = get_previous_position(fb, *fb.start_selection);
+    }
+  if (pos == position(0, 0))
+    pos = get_last_position(fb);
+  pos = get_actual_position(fb, pos);
+  if (pos >= lastfb) {
+    pos = lastfb;
+    pos = get_previous_position(fb, pos);
+    }
+  position first_encounter = pos;
+  wchar_t current_text_char = txt[text_pos.row][text_pos.col];
+  wchar_t first_text_char = txt[text_pos.row][text_pos.col];
+  while (pos != firstpos)
+    {
+    wchar_t current_char = fb.content[pos.row][pos.col];
+    if (current_char == current_text_char)
+      {
+      if (text_pos.col == 0 && text_pos.row == 0)
+        first_encounter = pos;
+      text_pos = get_next_position(txt, text_pos);
+      if (text_pos == lasttext)
+        {
+        fb.start_selection = first_encounter;
+        fb.pos = pos;
+        return fb;
+        }
+      current_text_char = txt[text_pos.row][text_pos.col];
+      pos = get_next_position(fb, pos);
+      }
+    else
+      {
+      current_text_char = first_text_char;
+      text_pos = position(0, 0);
+      if (pos > first_encounter) {
+        pos = first_encounter;
+      }
+      pos = get_previous_position(fb, pos);
+      }
+    }
+  fb.pos = position(0, 0);
+  fb.start_selection = std::nullopt;
+  return fb;
+  }  
+
+file_buffer find_text(file_buffer fb, text txt)
+  {
   if (txt.empty())
     return fb;
   if (fb.content.empty())
@@ -1411,14 +1408,23 @@ file_buffer find_text(file_buffer fb, text txt)
   fb.pos = lastpos;
   fb.start_selection = std::nullopt;
   return fb;
-  #endif
   }
 
+file_buffer find_text_reverse(file_buffer fb, const std::wstring& wtxt)
+  {
+  return find_text_reverse(fb, to_text(wtxt));
+  }
+  
 file_buffer find_text(file_buffer fb, const std::wstring& wtxt)
   {
   return find_text(fb, to_text(wtxt));
   }
 
+file_buffer find_text_reverse(file_buffer fb, const std::string& txt)
+  {
+  return find_text_reverse(fb, convert_string_to_wstring(txt));
+  }
+  
 file_buffer find_text(file_buffer fb, const std::string& txt)
   {
   return find_text(fb, convert_string_to_wstring(txt));
