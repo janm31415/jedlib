@@ -1217,6 +1217,10 @@ position find_previous_occurence(text txt, position starting_pos, text txt_to_fi
   position pos = starting_pos;
   position text_pos(0, 0);
   wchar_t current_text_char = txt_to_find[text_pos.row][text_pos.col];
+  position lasttxt = get_last_position(txt);
+  if (pos >= lasttxt) {
+    pos = get_previous_position(txt, lasttxt);
+  }
   position first_encounter = pos;
   position lasttext = get_last_position(txt_to_find);
   wchar_t first_text_char = txt_to_find[text_pos.row][text_pos.col];

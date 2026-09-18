@@ -798,7 +798,10 @@ void test_BufferFindNextOccurence() {
   EXPECT_TRUE(position(0, 4) == find_next_occurence(buf.content, position(0, 0), std::wstring(L"nobody")));
   EXPECT_TRUE(position(-1, -1) == find_next_occurence(buf.content, position(0, 0), std::wstring(L"somewhere")));
   EXPECT_TRUE(position(0, 4) == find_previous_occurence(buf.content, position(1, 0), std::wstring(L"nobody")));
+  EXPECT_TRUE(position(-1, -1) == find_previous_occurence(buf.content, position(0, 3), std::wstring(L"nobody")));
+  EXPECT_TRUE(position(1, 8) == find_previous_occurence(buf.content, position(10, 0), std::wstring(L"nobody")));  
   EXPECT_TRUE(position(0, 0) == find_previous_occurence(buf.content, position(1, 0), std::wstring(L"I'm")));
+  EXPECT_TRUE(position(8, 15) == find_previous_occurence(buf.content, position(10, 0), std::wstring(L"bog!")));  
   }
 
 void test_BufferFindText() {
