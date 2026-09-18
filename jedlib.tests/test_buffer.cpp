@@ -851,7 +851,6 @@ void test_BufferFindTextReverse() {
   found = find_text_reverse(found, std::string("nobody"));
   EXPECT_TRUE(position(1, 8) == *found.start_selection);
   EXPECT_TRUE(position(1, 13) == found.pos);
-  
   }
 
 void test_BufferFindTextCaseInsensitive() {
@@ -876,6 +875,27 @@ void test_BufferReadNextWord() {
   line separators = make_line("(abc)");
   EXPECT_TRUE(read_next_word(separators.begin(), separators.end()) == std::wstring(L""));
   }
+  
+void test_BufferFindTextReverseCaseInsensitive() {
+  file_buffer buf = make_buffer();
+  buf.pos = position(10, 0);
+
+  file_buffer found = find_text_reverse_case_insensitive(buf, std::string("NOBODY"));
+  EXPECT_TRUE(position(1, 8) == *found.start_selection);
+  EXPECT_TRUE(position(1, 13) == found.pos);
+  
+  found = find_text_reverse_case_insensitive(found, std::string("noBODy"));
+  EXPECT_TRUE(position(0, 4) == *found.start_selection);
+  EXPECT_TRUE(position(0, 9) == found.pos);
+  
+  found = find_text_reverse_case_insensitive(found, std::string("nobodY"));
+  EXPECT_TRUE(found.start_selection == std::nullopt);
+  EXPECT_TRUE(position(0, 0) == found.pos);
+  
+  found = find_text_reverse_case_insensitive(found, std::string("NObody"));
+  EXPECT_TRUE(position(1, 8) == *found.start_selection);
+  EXPECT_TRUE(position(1, 13) == found.pos);  
+  }  
 
 void test_BufferFindCorrespondingToken() {
   file_buffer buf = make_empty_buffer();
@@ -1101,6 +1121,7 @@ void run_buffer_tests() {
   test_BufferFindText();
   test_BufferFindTextReverse();
   test_BufferFindTextCaseInsensitive();
+  test_BufferFindTextReverseCaseInsensitive();
   test_BufferReadNextWord();
   test_BufferFindCorrespondingToken();
   test_BufferIndentation();

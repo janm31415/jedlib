@@ -216,9 +216,15 @@ file_buffer find_text(file_buffer fb, const std::string& txt);
 
 file_buffer find_text_case_insensitive(file_buffer fb, text txt);
 
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, text txt);
+
 file_buffer find_text_case_insensitive(file_buffer fb, const std::wstring& wtxt);
 
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::wstring& wtxt);
+
 file_buffer find_text_case_insensitive(file_buffer fb, const std::string& txt);
+
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::string& txt);
 
 position find_next_occurence(text txt, position starting_pos, wchar_t ch);
 
