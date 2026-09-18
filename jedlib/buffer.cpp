@@ -1403,8 +1403,9 @@ file_buffer find_text_case_insensitive(file_buffer fb, const std::string& txt)
 
 std::wstring read_next_word(line::const_iterator it, line::const_iterator it_end)
   {
+  const std::wstring delimiters = L" ,(){}[]\n\t\r<>&*|;/\\";
   std::wstring out;
-  while (it != it_end && *it != L' ' && *it != L',' && *it != L'(' && *it != L'{' && *it != L')' && *it != L'}' && *it != L'[' && *it != L']' && *it != L'\n' && *it != L'\t' && *it != L'\r' && *it != L'<' && *it != L'>' && *it != L'&' && *it != L'*')
+  while (it != it_end && delimiters.find(*it) == std::string::npos)
     {
     out.push_back(*it);
     ++it;
