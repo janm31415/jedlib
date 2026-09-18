@@ -194,7 +194,11 @@ std::wstring to_wstring(text txt);
 
 std::wstring to_wstring(text txt, position from, position to);
 
-position find_next_occurence_reverse(text txt, position starting_pos, const std::wstring& wtxt_to_find);
+position find_previous_occurence(text txt, position starting_pos, text txt_to_find);
+
+position find_previous_occurence(text txt, position starting_pos, const std::wstring& wtxt_to_find);
+
+position find_next_occurence(text txt, position starting_pos, text txt_to_find);
 
 position find_next_occurence(text txt, position starting_pos, const std::wstring& wtxt_to_find);
 
