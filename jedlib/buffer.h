@@ -202,29 +202,31 @@ position find_next_occurence(text txt, position starting_pos, text txt_to_find);
 
 position find_next_occurence(text txt, position starting_pos, const std::wstring& wtxt_to_find);
 
-file_buffer find_text_reverse(file_buffer fb, text txt);
+file_buffer find_text_reverse(file_buffer fb, text txt, bool whole_word=false, bool case_insensitive=false);
 
-file_buffer find_text(file_buffer fb, text txt);
+file_buffer find_text(file_buffer fb, text txt, bool whole_word=false, bool case_insensitive=false);
 
-file_buffer find_text_reverse(file_buffer fb, const std::wstring& wtxt);
+file_buffer find_text_reverse(file_buffer fb, const std::wstring& wtxt, bool whole_word=false, bool case_insensitive=false);
 
-file_buffer find_text(file_buffer fb, const std::wstring& wtxt);
+file_buffer find_text(file_buffer fb, const std::wstring& wtxt, bool whole_word=false, bool case_insensitive=false);
 
-file_buffer find_text_reverse(file_buffer fb, const std::string& txt);
+file_buffer find_text_reverse(file_buffer fb, const std::string& txt, bool whole_word=false, bool case_insensitive=false);
 
-file_buffer find_text(file_buffer fb, const std::string& txt);
+file_buffer find_text(file_buffer fb, const std::string& txt, bool whole_word=false, bool case_insensitive=false);
 
-file_buffer find_text_case_insensitive(file_buffer fb, text txt);
+file_buffer find_text_case_insensitive(file_buffer fb, text txt, bool whole_word=false);
 
-file_buffer find_text_reverse_case_insensitive(file_buffer fb, text txt);
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, text txt, bool whole_word=false);
 
-file_buffer find_text_case_insensitive(file_buffer fb, const std::wstring& wtxt);
+file_buffer find_text_case_insensitive(file_buffer fb, const std::wstring& wtxt, bool whole_word=false);
 
-file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::wstring& wtxt);
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::wstring& wtxt, bool whole_word=false);
 
-file_buffer find_text_case_insensitive(file_buffer fb, const std::string& txt);
+file_buffer find_text_case_insensitive(file_buffer fb, const std::string& txt, bool whole_word=false);
 
-file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::string& txt);
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::string& txt, bool whole_word=false);
+
+bool is_whole_word(file_buffer fb, position from, position to);
 
 position find_next_occurence(text txt, position starting_pos, wchar_t ch);
 

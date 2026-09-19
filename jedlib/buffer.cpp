@@ -1310,7 +1310,32 @@ position find_next_occurence(file_buffer fb, position starting_pos, wchar_t ch) 
   return find_next_occurence(fb.content, starting_pos, ch);
   }
   
-file_buffer find_text_reverse(file_buffer fb, text txt)
+bool is_word_separator(wchar_t ch) {
+  const std::wstring delimiters = L" ,(){}[]\n\t\r<>&*|;/\\:";
+  return delimiters.find(ch) != std::wstring::npos;
+}
+
+bool is_whole_word(file_buffer fb, position from, position to) {
+  bool before_is_word_separator = false;
+  bool after_is_word_separator = false;
+  from = get_previous_position(fb, from);
+  to = get_next_position(fb, to);
+  if (from <= position(0, 0))
+    before_is_word_separator = true;
+  else {
+    wchar_t ch = fb.content[from.row][from.col];
+    before_is_word_separator = is_word_separator(ch);
+  }
+  if (to >= get_last_position(fb))
+    after_is_word_separator = true;
+  else {
+    wchar_t ch = fb.content[to.row][to.col];
+    after_is_word_separator = is_word_separator(ch);
+  }
+  return before_is_word_separator && after_is_word_separator;
+}
+  
+file_buffer find_text_reverse(file_buffer fb, text txt, bool whole_word, bool case_insensitive)
   {
   if (txt.empty())
     return fb;
@@ -1333,11 +1358,11 @@ file_buffer find_text_reverse(file_buffer fb, text txt)
     pos = get_previous_position(fb, pos);
     }
   position first_encounter = pos;
-  wchar_t current_text_char = txt[text_pos.row][text_pos.col];
-  wchar_t first_text_char = txt[text_pos.row][text_pos.col];
+  wchar_t current_text_char = case_insensitive ? tolower(txt[text_pos.row][text_pos.col]) : txt[text_pos.row][text_pos.col];
+  wchar_t first_text_char = case_insensitive ? tolower(txt[text_pos.row][text_pos.col]) : txt[text_pos.row][text_pos.col];
   while (pos != firstpos)
     {
-    wchar_t current_char = fb.content[pos.row][pos.col];
+    wchar_t current_char = case_insensitive ? tolower(fb.content[pos.row][pos.col]) : fb.content[pos.row][pos.col];
     if (current_char == current_text_char)
       {
       if (text_pos.col == 0 && text_pos.row == 0)
@@ -1345,199 +1370,84 @@ file_buffer find_text_reverse(file_buffer fb, text txt)
       text_pos = get_next_position(txt, text_pos);
       if (text_pos == lasttext)
         {
-        fb.start_selection = first_encounter;
-        fb.pos = pos;
-        return fb;
-        }
-      current_text_char = txt[text_pos.row][text_pos.col];
-      pos = get_next_position(fb, pos);
-      }
-    else
-      {
-      current_text_char = first_text_char;
-      text_pos = position(0, 0);
-      if (pos > first_encounter) {
-        pos = first_encounter;
-      }
-      pos = get_previous_position(fb, pos);
-      }
-    }
-  fb.pos = position(0, 0);
-  fb.start_selection = std::nullopt;
-  return fb;
-  }  
-
-file_buffer find_text(file_buffer fb, text txt)
-  {
-  if (txt.empty())
-    return fb;
-  if (fb.content.empty())
-    return fb;
-  fb.rectangular_selection = false;
-  position lastpos = get_last_position(fb);
-  position pos = fb.pos;
-  position text_pos(0, 0);
-  position lasttext = get_last_position(txt);
-  position first_encounter;
-  if (has_selection(fb) && fb.start_selection > pos)
-    pos = *fb.start_selection;
-  if (pos == lastpos)
-    pos.col = pos.row = 0;
-  pos = get_actual_position(fb, pos);
-  wchar_t current_text_char = txt[text_pos.row][text_pos.col];
-  wchar_t first_text_char = txt[text_pos.row][text_pos.col];
-  while (pos != lastpos)
-    {
-    wchar_t current_char = fb.content[pos.row][pos.col];
-    if (current_char == current_text_char)
-      {
-      if (text_pos.col == 0 && text_pos.row == 0)
-        first_encounter = pos;
-      text_pos = get_next_position(txt, text_pos);
-      if (text_pos == lasttext)
-        {
-        fb.start_selection = first_encounter;
-        fb.pos = pos;
-        return fb;
-        }
-      current_text_char = txt[text_pos.row][text_pos.col];
-      }
-    else
-      {
-      current_text_char = first_text_char;
-      text_pos = position(0, 0);
-      }
-    pos = get_next_position(fb, pos);
-    }
-  fb.pos = lastpos;
-  fb.start_selection = std::nullopt;
-  return fb;
-  }
-
-file_buffer find_text_reverse(file_buffer fb, const std::wstring& wtxt)
-  {
-  return find_text_reverse(fb, to_text(wtxt));
-  }
-  
-file_buffer find_text(file_buffer fb, const std::wstring& wtxt)
-  {
-  return find_text(fb, to_text(wtxt));
-  }
-
-file_buffer find_text_reverse(file_buffer fb, const std::string& txt)
-  {
-  return find_text_reverse(fb, convert_string_to_wstring(txt));
-  }
-  
-file_buffer find_text(file_buffer fb, const std::string& txt)
-  {
-  return find_text(fb, convert_string_to_wstring(txt));
-  }
-
-
-file_buffer find_text_reverse_case_insensitive(file_buffer fb, text txt)
-  {
-  if (txt.empty())
-    return fb;
-  if (fb.content.empty())
-    return fb;
-  fb.rectangular_selection = false;
-  position firstpos = position(-1, -1);
-  position pos = fb.pos;
-  position text_pos(0, 0);
-  position lasttext = get_last_position(txt);
-  position lastfb = get_last_position(fb);
-  if (has_selection(fb) && fb.start_selection < pos) {
-    pos = get_previous_position(fb, *fb.start_selection);
-    }
-  if (pos == position(0, 0))
-    pos = get_last_position(fb);
-  pos = get_actual_position(fb, pos);
-  if (pos >= lastfb) {
-    pos = lastfb;
-    pos = get_previous_position(fb, pos);
-    }
-  position first_encounter = pos;
-  wchar_t current_text_char = tolower(txt[text_pos.row][text_pos.col]);
-  wchar_t first_text_char = tolower(txt[text_pos.row][text_pos.col]);
-  while (pos != firstpos)
-    {
-    wchar_t current_char = tolower(fb.content[pos.row][pos.col]);
-    if (current_char == current_text_char)
-      {
-      if (text_pos.col == 0 && text_pos.row == 0)
-        first_encounter = pos;
-      text_pos = get_next_position(txt, text_pos);
-      if (text_pos == lasttext)
-        {
-        fb.start_selection = first_encounter;
-        fb.pos = pos;
-        return fb;
-        }
-      current_text_char = tolower(txt[text_pos.row][text_pos.col]);
-      pos = get_next_position(fb, pos);
-      }
-    else
-      {
-      current_text_char = first_text_char;
-      text_pos = position(0, 0);
-      if (pos > first_encounter) {
-        pos = first_encounter;
-      }
-      pos = get_previous_position(fb, pos);
-      }
-    }
-  fb.pos = position(0, 0);
-  fb.start_selection = std::nullopt;
-  return fb;
-  }
-  
-file_buffer find_text_case_insensitive(file_buffer fb, text txt)
-  {
-  if (txt.empty())
-    return fb;
-  if (fb.content.empty())
-    return fb;
-  fb.rectangular_selection = false;
-  position lastpos = get_last_position(fb);
-  position pos = txt[0].size() == 1 ? get_next_position(fb, fb.pos) : fb.pos;
-  position text_pos(0, 0);
-  position lasttext = get_last_position(txt);
-  position first_encounter;
-  if (has_selection(fb) && fb.start_selection > pos)
-    pos = *fb.start_selection;
-  if (pos == lastpos)
-    pos.col = pos.row = 0;
-  pos = get_actual_position(fb, pos);
-  wchar_t first_text_char = tolower(txt[text_pos.row][text_pos.col]);
-  while (pos != lastpos)
-    {
-    wchar_t current_char = tolower(fb.content[pos.row][pos.col]);
-    if (current_char == first_text_char)
-      {
-      wchar_t current_text_char = first_text_char;
-      position pos2 = pos;
-      while (pos2 != lastpos)
-        {
-        current_char = tolower(fb.content[pos2.row][pos2.col]);
-        if (current_char == current_text_char)
-          {
-          text_pos = get_next_position(txt, text_pos);
-          if (text_pos == lasttext)
-            {
-            fb.start_selection = pos;
-            fb.pos = pos2;
-            return fb;
-            }
-          current_text_char = tolower(txt[text_pos.row][text_pos.col]);
-          pos2 = get_next_position(fb, pos2);
-          }
-        else
-          {
+        if (whole_word && !is_whole_word(fb, first_encounter, pos)) {
+          current_text_char = first_text_char;
           text_pos = position(0, 0);
-          break;
+          if (pos > first_encounter) {
+            pos = first_encounter;
+          }
+          pos = get_previous_position(fb, pos);
+          continue;
+        } else {
+          fb.start_selection = first_encounter;
+          fb.pos = pos;
+          return fb;
           }
         }
+      current_text_char = case_insensitive ? tolower(txt[text_pos.row][text_pos.col]) : txt[text_pos.row][text_pos.col];
+      pos = get_next_position(fb, pos);
+      }
+    else
+      {
+      current_text_char = first_text_char;
+      text_pos = position(0, 0);
+      if (pos > first_encounter) {
+        pos = first_encounter;
+      }
+      pos = get_previous_position(fb, pos);
+      }
+    }
+  fb.pos = position(0, 0);
+  fb.start_selection = std::nullopt;
+  return fb;
+  }  
+
+file_buffer find_text(file_buffer fb, text txt, bool whole_word, bool case_insensitive)
+  {
+  if (txt.empty())
+    return fb;
+  if (fb.content.empty())
+    return fb;
+  fb.rectangular_selection = false;
+  position lastpos = get_last_position(fb);
+  position pos = fb.pos;
+  position text_pos(0, 0);
+  position lasttext = get_last_position(txt);
+  position first_encounter;
+  if (has_selection(fb) && fb.start_selection > pos)
+    pos = *fb.start_selection;
+  if (pos == lastpos)
+    pos.col = pos.row = 0;
+  pos = get_actual_position(fb, pos);
+  wchar_t current_text_char = case_insensitive ? tolower(txt[text_pos.row][text_pos.col]) : txt[text_pos.row][text_pos.col];
+  wchar_t first_text_char = case_insensitive ? tolower(txt[text_pos.row][text_pos.col]) : txt[text_pos.row][text_pos.col];
+  while (pos != lastpos)
+    {
+    wchar_t current_char = case_insensitive ? tolower(fb.content[pos.row][pos.col]) : fb.content[pos.row][pos.col];
+    if (current_char == current_text_char)
+      {
+      if (text_pos.col == 0 && text_pos.row == 0)
+        first_encounter = pos;
+      text_pos = get_next_position(txt, text_pos);
+      if (text_pos == lasttext)
+        {
+        if (whole_word && !is_whole_word(fb, first_encounter, pos)) {
+          current_text_char = first_text_char;
+          text_pos = position(0, 0);
+          pos = get_next_position(fb, pos);
+          continue;
+        } else {
+          fb.start_selection = first_encounter;
+          fb.pos = pos;
+          return fb;
+          }
+        }
+      current_text_char = case_insensitive ? tolower(txt[text_pos.row][text_pos.col]) : txt[text_pos.row][text_pos.col];
+      }
+    else
+      {
+      current_text_char = first_text_char;
+      text_pos = position(0, 0);
       }
     pos = get_next_position(fb, pos);
     }
@@ -1546,31 +1456,62 @@ file_buffer find_text_case_insensitive(file_buffer fb, text txt)
   return fb;
   }
 
-file_buffer find_text_case_insensitive(file_buffer fb, const std::wstring& wtxt)
+file_buffer find_text_reverse(file_buffer fb, const std::wstring& wtxt, bool whole_word, bool case_insensitive)
   {
-  return find_text_case_insensitive(fb, to_text(wtxt));
-  }
-
-file_buffer find_text_case_insensitive(file_buffer fb, const std::string& txt)
-  {
-  return find_text_case_insensitive(fb, convert_string_to_wstring(txt));
+  return find_text_reverse(fb, to_text(wtxt), whole_word, case_insensitive);
   }
   
-file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::wstring& wtxt)
+file_buffer find_text(file_buffer fb, const std::wstring& wtxt, bool whole_word, bool case_insensitive)
   {
-  return find_text_reverse_case_insensitive(fb, to_text(wtxt));
+  return find_text(fb, to_text(wtxt), whole_word, case_insensitive);
   }
 
-file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::string& txt)
+file_buffer find_text_reverse(file_buffer fb, const std::string& txt, bool whole_word, bool case_insensitive)
   {
-  return find_text_reverse_case_insensitive(fb, convert_string_to_wstring(txt));
-  }  
+  return find_text_reverse(fb, convert_string_to_wstring(txt), whole_word, case_insensitive);
+  }
+  
+file_buffer find_text(file_buffer fb, const std::string& txt, bool whole_word, bool case_insensitive)
+  {
+  return find_text(fb, convert_string_to_wstring(txt), whole_word, case_insensitive);
+  }
+
+
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, text txt, bool whole_word)
+  {
+  return find_text_reverse(fb, txt, whole_word, true);
+  }
+  
+file_buffer find_text_case_insensitive(file_buffer fb, text txt, bool whole_word)
+  {
+  return find_text(fb, txt, whole_word, true);
+  }
+
+file_buffer find_text_case_insensitive(file_buffer fb, const std::wstring& wtxt, bool whole_word)
+  {
+  return find_text_case_insensitive(fb, to_text(wtxt), whole_word);
+  }
+
+file_buffer find_text_case_insensitive(file_buffer fb, const std::string& txt, bool whole_word)
+  {
+  return find_text_case_insensitive(fb, convert_string_to_wstring(txt), whole_word);
+  }
+  
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::wstring& wtxt, bool whole_word)
+  {
+  return find_text_reverse_case_insensitive(fb, to_text(wtxt), whole_word);
+  }
+
+file_buffer find_text_reverse_case_insensitive(file_buffer fb, const std::string& txt, bool whole_word)
+  {
+  return find_text_reverse_case_insensitive(fb, convert_string_to_wstring(txt), whole_word);
+  }
 
 std::wstring read_next_word(line::const_iterator it, line::const_iterator it_end)
   {
-  const std::wstring delimiters = L" ,(){}[]\n\t\r<>&*|;/\\";
+  const std::wstring delimiters = L" ,(){}[]\n\t\r<>&*|;/\\:";
   std::wstring out;
-  while (it != it_end && delimiters.find(*it) == std::string::npos)
+  while (it != it_end && delimiters.find(*it) == std::wstring::npos)
     {
     out.push_back(*it);
     ++it;
