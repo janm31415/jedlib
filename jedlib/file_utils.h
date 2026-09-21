@@ -20,4 +20,10 @@ std::vector<std::string> get_subdirectories_from_directory(const std::string& d,
 std::string get_filename(const std::string& path);
 std::string get_extension(const std::string& filename);
 
+
+// The path of 'p' relative to project root 'root' if 'p' lives inside it, else
+// an empty string. Used both to decide whether an editor belongs to the project
+// and to compute the path stored in the session file.
+std::string relInProject(const std::string& root, const std::string& p);
+
 JEDLIB_END

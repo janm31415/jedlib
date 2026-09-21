@@ -141,4 +141,19 @@ std::string get_extension(const std::string& filename) {
   return ext;
 }
 
+// The path of 'p' relative to project root 'root' if 'p' lives inside it, else
+// an empty string. Used both to decide whether an editor belongs to the project
+// and to compute the path stored in the session file.
+std::string relInProject(const std::string& root, const std::string& p)
+  {
+  if (root.empty() || p.empty())
+    return {};
+  std::error_code ec;
+  std::filesystem::path rel = std::filesystem::path(p).lexically_relative(root);
+  std::string s = rel.generic_string();
+  if (s.empty() || s == "." || s == ".." || s.rfind("../", 0) == 0)
+    return {}; // not inside the project root
+  return s;
+  }
+
 JEDLIB_END
