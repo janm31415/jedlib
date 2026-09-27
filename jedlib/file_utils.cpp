@@ -103,8 +103,15 @@ std::vector<std::string> get_subdirectories_from_directory(const std::string& d,
 
 std::string get_filename(const std::string& path)
   {
-  return std::filesystem::path(path).filename().string();
+  std::filesystem::path p = std::filesystem::u8path(path);
+  return p.filename().u8string();
   }
+  
+std::string get_folder(const std::string& filename_utf8)
+{
+    std::filesystem::path p = std::filesystem::u8path(filename_utf8);
+    return p.parent_path().u8string();
+}  
 
 std::vector<std::string> get_files_from_directory(const std::string& d, bool include_subfolders)
   {
