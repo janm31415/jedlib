@@ -14,48 +14,48 @@
 JEDLIB_BEGIN
 
 std::filesystem::path get_executable_path()
-{
+  {
 #if defined(_WIN32)
   wchar_t buffer[MAX_PATH];
   DWORD len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
   if (len == 0) {
     throw std::runtime_error("GetModuleFileNameW failed");
-  }
+    }
   return std::filesystem::path(buffer);
-  
+
 #elif defined(__APPLE__)
   uint32_t size = 0;
   _NSGetExecutablePath(nullptr, &size); // get required size
   std::string buffer(size, '\0');
   if (_NSGetExecutablePath(buffer.data(), &size) != 0) {
     throw std::runtime_error("_NSGetExecutablePath failed");
-  }
+    }
   return std::filesystem::weakly_canonical(std::filesystem::path(buffer.c_str()));
-  
+
 #elif defined(__linux__)
   char buffer[PATH_MAX];
   ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
   if (len == -1) {
     throw std::runtime_error("readlink(/proc/self/exe) failed");
-  }
+    }
   buffer[len] = '\0';
   return std::filesystem::path(buffer);
-  
+
 #else
 #error Unsupported platform
 #endif
-}
+  }
 
 std::filesystem::path get_executable_folder()
-{
+  {
   return get_executable_path().parent_path();
-}
+  }
 
 
 std::string get_file_in_executable_path(const std::string& filename) {
   std::filesystem::path path = get_executable_folder() / filename;
   return path.string();
-}
+  }
 
 bool file_exists(const std::string& filename) {
   return std::filesystem::exists(filename);
@@ -108,12 +108,12 @@ std::string get_filename(const std::string& path)
   std::filesystem::path p = std::filesystem::u8path(path);
   return p.filename().u8string();
   }
-  
+
 std::string get_folder(const std::string& filename_utf8)
-{
-    std::filesystem::path p = std::filesystem::u8path(filename_utf8);
-    return p.parent_path().u8string();
-}  
+  {
+  std::filesystem::path p = std::filesystem::u8path(filename_utf8);
+  return p.parent_path().u8string();
+  }
 
 std::vector<std::string> get_files_from_directory(const std::string& d, bool include_subfolders)
   {
@@ -144,11 +144,11 @@ std::vector<std::string> get_files_from_directory(const std::string& d, bool inc
 
   return files;
   }
-  
+
 std::string get_extension(const std::string& filename) {
   std::string ext = std::filesystem::u8path(filename).extension().u8string();
   return ext;
-}
+  }
 
 // The path of 'p' relative to project root 'root' if 'p' lives inside it, else
 // an empty string. Used both to decide whether an editor belongs to the project
@@ -177,36 +177,51 @@ bool parse_location(std::string_view input, ParsedLocation& out) {
   if (input.empty())
     return false;
 
-  if (input.back() == ':')
+  while (!input.empty() && input.back() == ':')
     input.remove_suffix(1); // remove trailing ':'
 
-  auto last_colon = input.rfind(':');
-  if (last_colon == std::string_view::npos)
-    return false;
-
-  auto second_last_colon = input.rfind(':', last_colon - 1);
-  if (second_last_colon == std::string_view::npos)
-    return false;
-
-  std::string_view path_part = input.substr(0, second_last_colon);
-  std::string_view line_part = input.substr(second_last_colon + 1,
-    last_colon - second_last_colon - 1);
-  std::string_view column_part = input.substr(last_colon + 1);
-
   int line = 0, column = 0;
-  if (!parse_int(line_part, line) || !parse_int(column_part, column))
-    return false;
+  auto last_colon = input.rfind(':');
+  std::string_view path_part;
 
-  if (path_part.empty())
-    return false;
+  if (last_colon != std::string_view::npos) {
 
-  if (line < 0 || column < 0)
-    return false;
+    auto second_last_colon = input.rfind(':', last_colon - 1);
+    if (second_last_colon != std::string_view::npos) {
 
-  // Optional: syntactic path validation
-  std::filesystem::path p(path_part);
+      path_part = input.substr(0, second_last_colon);
+      std::string_view line_part = input.substr(second_last_colon + 1,
+        last_colon - second_last_colon - 1);
+      std::string_view column_part = input.substr(last_colon + 1);
 
-  out = { p, line, column };
-  return true;
-  }
-JEDLIB_END
+      if (!parse_int(line_part, line) || !parse_int(column_part, column))
+        return false;
+
+      }
+    else {
+
+      path_part = input.substr(0, last_colon);
+      std::string_view line_part = input.substr(last_colon + 1);
+      if (!parse_int(line_part, line))
+        return false;
+      }
+
+    }
+
+    if (path_part.empty())
+      return false;
+
+    int dummy;
+    if (parse_int(path_part, dummy)) // path should not be an integer
+      return false;
+
+    if (line < 0 || column < 0)
+      return false;
+
+    // Optional: syntactic path validation
+    std::filesystem::path p(path_part);
+
+    out = { p, line, column };
+    return true;
+    }
+  JEDLIB_END

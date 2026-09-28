@@ -48,9 +48,11 @@ void test_AcceptsMissingTrailingColon() {
   EXPECT_EQ(loc.column, 34);
   }
 
-void test_RejectsMissingColumn() {
+void test_AcceptMissingColumn() {
   ParsedLocation loc;
-  EXPECT_TRUE(!parse_location("src/main.cpp:12::", loc));
+  EXPECT_TRUE(parse_location("src/main.cpp:12::", loc));
+  EXPECT_EQ(loc.line, 12);
+  EXPECT_EQ(loc.column, 0);
   }
 
 void test_RejectsMissingLine() {
@@ -73,9 +75,11 @@ void test_RejectsNonNumericColumn() {
   EXPECT_TRUE(!parse_location("src/main.cpp:12:xyz:", loc));
   }
 
-void test_RejectsTooFewFields() {
+void test_AcceptsTooFewFields() {
   ParsedLocation loc;
-  EXPECT_TRUE(!parse_location("src/main.cpp:12:", loc));
+  EXPECT_TRUE(parse_location("src/main.cpp:12:", loc));
+  EXPECT_EQ(loc.line, 12);
+  EXPECT_EQ(loc.column, 0);
   }
 
 void test_RejectsOnlyNumbers() {
@@ -116,12 +120,12 @@ void run_file_utils_tests() {
   test_ParsesWindowsStylePath();
   test_RejectsEmptyString();
   test_AcceptsMissingTrailingColon();
-  test_RejectsMissingColumn();
+  test_AcceptMissingColumn();
   test_RejectsMissingLine();
   test_RejectsMissingPath();
   test_RejectsNonNumericLine();
   test_RejectsNonNumericColumn();
-  test_RejectsTooFewFields();
+  test_AcceptsTooFewFields();
   test_RejectsOnlyNumbers();
   test_AcceptsZeroLineAndColumnIfImplementationAllowsIt();
   test_RejectsNegativeLine();
