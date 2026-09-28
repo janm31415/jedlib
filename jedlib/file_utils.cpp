@@ -182,7 +182,7 @@ bool parse_location(std::string_view input, ParsedLocation& out) {
 
   int line = 0, column = 0;
   auto last_colon = input.rfind(':');
-  std::string_view path_part;
+  std::string path_part;
 
   if (last_colon != std::string_view::npos) {
 
@@ -219,6 +219,15 @@ bool parse_location(std::string_view input, ParsedLocation& out) {
       return false;
 
     if (line < 0 || column < 0)
+      return false;
+
+    while (!path_part.empty() && path_part.front() == '"')
+      path_part.erase(path_part.begin());
+
+    if (!path_part.empty() && path_part.back() == '"')
+      path_part.pop_back();
+
+    if (path_part.empty())
       return false;
 
     // Optional: syntactic path validation
