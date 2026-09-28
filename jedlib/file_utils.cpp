@@ -58,7 +58,7 @@ std::string get_file_in_executable_path(const std::string& filename) {
   }
 
 bool file_exists(const std::string& filename) {
-  return std::filesystem::exists(filename);
+  return std::filesystem::exists(filename) && !std::filesystem::is_directory(filename);
   }
 
 bool is_directory(const std::string& directory) {
