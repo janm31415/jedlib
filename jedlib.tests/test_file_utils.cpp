@@ -41,9 +41,11 @@ void test_RejectsEmptyString() {
   EXPECT_TRUE(!parse_location("", loc));
   }
 
-void test_RejectsMissingTrailingColon() {
+void test_AcceptsMissingTrailingColon() {
   ParsedLocation loc;
-  EXPECT_TRUE(!parse_location("src/main.cpp:12:34", loc));
+  EXPECT_TRUE(parse_location("src/main.cpp:12:34", loc));
+  EXPECT_EQ(loc.line, 12);
+  EXPECT_EQ(loc.column, 34);
   }
 
 void test_RejectsMissingColumn() {
@@ -113,7 +115,7 @@ void run_file_utils_tests() {
   test_ParsesPathContainingColon();
   test_ParsesWindowsStylePath();
   test_RejectsEmptyString();
-  test_RejectsMissingTrailingColon();
+  test_AcceptsMissingTrailingColon();
   test_RejectsMissingColumn();
   test_RejectsMissingLine();
   test_RejectsMissingPath();

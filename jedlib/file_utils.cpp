@@ -174,11 +174,11 @@ bool parse_int(std::string_view s, int& value) {
   }
 
 bool parse_location(std::string_view input, ParsedLocation& out) {
-  // Must end with ':'
-  if (input.empty() || input.back() != ':')
+  if (input.empty())
     return false;
 
-  input.remove_suffix(1); // remove trailing ':'
+  if (input.back() == ':')
+    input.remove_suffix(1); // remove trailing ':'
 
   auto last_colon = input.rfind(':');
   if (last_colon == std::string_view::npos)
