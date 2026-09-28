@@ -110,6 +110,22 @@ void test_RejectsExtraTrailingCharacters() {
   EXPECT_TRUE(!parse_location("src/main.cpp:12:34:extra", loc));
   }
 
+void test_ParsesWithoutLineOrColumnNumbers() {
+  ParsedLocation loc;
+  EXPECT_TRUE(parse_location("main.cpp", loc));
+  EXPECT_EQ(loc.path, std::filesystem::path("main.cpp"));
+  EXPECT_EQ(loc.line, 0);
+  EXPECT_EQ(loc.column, 0);
+  }
+
+void test_ParsesWithoutLineOrColumnNumbers2() {
+  ParsedLocation loc;
+  EXPECT_TRUE(parse_location("main.cpp:", loc));
+  EXPECT_EQ(loc.path, std::filesystem::path("main.cpp"));
+  EXPECT_EQ(loc.line, 0);
+  EXPECT_EQ(loc.column, 0);
+  }
+
 JEDLIB_END
 
 void run_file_utils_tests() {
@@ -131,4 +147,6 @@ void run_file_utils_tests() {
   test_RejectsNegativeLine();
   test_RejectsNegativeColumn();
   test_RejectsExtraTrailingCharacters();
+  test_ParsesWithoutLineOrColumnNumbers();
+  test_ParsesWithoutLineOrColumnNumbers2();
   }

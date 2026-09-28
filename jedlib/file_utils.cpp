@@ -207,6 +207,9 @@ bool parse_location(std::string_view input, ParsedLocation& out) {
       }
 
     }
+  else {
+    path_part = input;
+    }
 
     if (path_part.empty())
       return false;
