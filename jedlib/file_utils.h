@@ -27,4 +27,12 @@ std::string get_extension(const std::string& filename);
 // and to compute the path stored in the session file.
 std::string relInProject(const std::string& root, const std::string& p);
 
+struct ParsedLocation {
+  std::filesystem::path path;
+  int line;
+  int column;
+  };
+
+bool parse_location(std::string_view input, ParsedLocation& out);
+
 JEDLIB_END

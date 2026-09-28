@@ -1,6 +1,7 @@
 #include "test_assert.h"
 #include "test_buffer.h"
 #include "test_edit.h"
+#include "test_file_utils.h"
 #include "test_syntax_highlight.h"
 #include <ctime>
 
@@ -37,6 +38,7 @@ int main(int /*argc*/, const char* /*argv*/[])
   auto tic = std::clock();
   run_buffer_tests();  
   run_edit_tests();
+  run_file_utils_tests();
   run_syntax_highlight_tests();
   auto toc = std::clock();
 

@@ -9,6 +9,8 @@
 #include <limits.h>
 #endif
 
+#include <charconv>
+
 JEDLIB_BEGIN
 
 std::filesystem::path get_executable_path()
@@ -163,4 +165,48 @@ std::string relInProject(const std::string& root, const std::string& p)
   return s;
   }
 
+bool parse_int(std::string_view s, int& value) {
+  if (s.empty()) return false;
+  auto* begin = s.data();
+  auto* end = s.data() + s.size();
+  auto [ptr, ec] = std::from_chars(begin, end, value);
+  return ec == std::errc{} && ptr == end;
+  }
+
+bool parse_location(std::string_view input, ParsedLocation& out) {
+  // Must end with ':'
+  if (input.empty() || input.back() != ':')
+    return false;
+
+  input.remove_suffix(1); // remove trailing ':'
+
+  auto last_colon = input.rfind(':');
+  if (last_colon == std::string_view::npos)
+    return false;
+
+  auto second_last_colon = input.rfind(':', last_colon - 1);
+  if (second_last_colon == std::string_view::npos)
+    return false;
+
+  std::string_view path_part = input.substr(0, second_last_colon);
+  std::string_view line_part = input.substr(second_last_colon + 1,
+    last_colon - second_last_colon - 1);
+  std::string_view column_part = input.substr(last_colon + 1);
+
+  int line = 0, column = 0;
+  if (!parse_int(line_part, line) || !parse_int(column_part, column))
+    return false;
+
+  if (path_part.empty())
+    return false;
+
+  if (line < 0 || column < 0)
+    return false;
+
+  // Optional: syntactic path validation
+  std::filesystem::path p(path_part);
+
+  out = { p, line, column };
+  return true;
+  }
 JEDLIB_END

@@ -5,6 +5,7 @@ set(HDRS
 test_assert.h
 test_buffer.h
 test_edit.h
+test_file_utils.h
 test_syntax_highlight.h
 )
 	
@@ -13,6 +14,7 @@ test.cpp
 test_assert.cpp
 test_buffer.cpp
 test_edit.cpp
+test_file_utils.cpp
 test_syntax_highlight.cpp
 )
 
