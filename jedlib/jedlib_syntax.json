@@ -139,7 +139,7 @@
     "singleline_comment": "//",
     "multiline_comment_begin": "/*",
     "multiline_comment_end": "*/",
-    "uses_quotes_for_chars": 1,
+    "uses_quotes_for_chars": 0,
     "keywords_1": "as async await break const continue crate dyn else enum extern false fn for if impl in let loop macro match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final macro override priv try typeof unsized virtual yield",
     "keywords_2": "bool char str f32 f64 i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize"
     },
