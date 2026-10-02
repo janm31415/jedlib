@@ -10,6 +10,7 @@
 #endif
 
 #include <charconv>
+#include <cwctype>
 
 JEDLIB_BEGIN
 
