@@ -126,6 +126,37 @@ void test_ParsesWithoutLineOrColumnNumbers2() {
   EXPECT_EQ(loc.column, 0);
   }
 
+void test_looks_like_path() {
+  EXPECT_TRUE(looks_like_path(L"/usr/local/bin"));
+  EXPECT_TRUE(looks_like_path(L"./file.txt"));
+  EXPECT_TRUE(looks_like_path(L"../src/main.cpp"));
+  EXPECT_TRUE(looks_like_path(L"~/docs/readme.md"));
+  EXPECT_TRUE(looks_like_path(L"C:\\Windows\\System32"));
+  EXPECT_TRUE(looks_like_path(L"C:\\"));
+  EXPECT_TRUE(looks_like_path(L"\\\\server\\share\\a"));
+
+  EXPECT_TRUE(!looks_like_path(L"hello world"));
+  EXPECT_TRUE(!looks_like_path(L"filename"));
+  EXPECT_TRUE(!looks_like_path(L"notes"));
+
+  EXPECT_TRUE(looks_like_path(L"file.txt"));
+  EXPECT_TRUE(looks_like_path(L"foo/bar"));
+  EXPECT_TRUE(!looks_like_path(L"C:temp"));
+  EXPECT_TRUE(!looks_like_path(L"C:\\te>mp"));
+  
+  EXPECT_TRUE(looks_like_path(L"/usr/local/bin:10:5:"));
+  EXPECT_TRUE(!looks_like_path(L"/usr/local/bin:10:5::"));
+  EXPECT_TRUE(looks_like_path(L"/usr/local/bin:10:5"));
+  EXPECT_TRUE(looks_like_path(L"/usr/local/bin:10:"));
+  EXPECT_TRUE(looks_like_path(L"/usr/local/bin:10"));
+  EXPECT_TRUE(looks_like_path(L"/usr/local/bin:"));
+  EXPECT_TRUE(looks_like_path(L"C:\\Windows\\System32:8:9:"));
+  EXPECT_TRUE(looks_like_path(L"C:\\Windows\\System32:8:9"));
+  EXPECT_TRUE(looks_like_path(L"C:\\Windows\\System32:8:"));
+  EXPECT_TRUE(looks_like_path(L"C:\\Windows\\System32:8"));
+  EXPECT_TRUE(looks_like_path(L"C:\\Windows\\System32:"));
+}
+
 JEDLIB_END
 
 void run_file_utils_tests() {
@@ -149,4 +180,5 @@ void run_file_utils_tests() {
   test_RejectsExtraTrailingCharacters();
   test_ParsesWithoutLineOrColumnNumbers();
   test_ParsesWithoutLineOrColumnNumbers2();
+  test_looks_like_path();
   }

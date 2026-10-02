@@ -34,5 +34,6 @@ struct ParsedLocation {
   };
 
 bool parse_location(std::string_view input, ParsedLocation& out);
+bool looks_like_path(std::wstring s);
 
 JEDLIB_END
