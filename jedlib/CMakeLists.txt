@@ -31,9 +31,10 @@ source_group("Source Files" FILES ${srcs})
 
 target_include_directories(jedlib 
   PUBLIC
-	  ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-rrb
+    ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-rrb
     )
-	
+  
 target_link_libraries(jedlib
     PUBLIC
+    immutable
     )
