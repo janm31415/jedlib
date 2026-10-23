@@ -769,7 +769,7 @@ address find_regex_range(std::string re, file_buffer fb, bool reverse, position 
         return r;
       }
     }
-  }  
+  }
   return r;
 }
 
@@ -1100,8 +1100,11 @@ struct command_handler
       fb.start_selection = std::nullopt;
       fb = insert(fb, _treat_escape_characters(cmd.txt.text), s, save_undo);
     } else {
-      fb.pos = dot.first;
-      fb.start_selection = dot.second;
+      // The dot is inclusive. 'erase' only treats the selection as inclusive when the
+      // caret is at its end (with the caret at the start the last character would survive,
+      // turning ',x/foo/ c/bar/' into 'baro').
+      fb.pos = dot.second;
+      fb.start_selection = dot.first;
       bool save_undo_mem = save_undo;
       if (fb.pos == *fb.start_selection) {
         fb = erase_right(fb, s, save_undo_mem);
@@ -1405,7 +1408,7 @@ struct command_handler
           new_p2 = *fb.start_selection;
         if (new_p2 < new_p1)
           std::swap(new_p1, new_p2);
-        //prev_dot_end = new_p2;        
+        //prev_dot_end = new_p2;
         //prev_dot_end.col += sm.length(0);
         position end = recompute_position_after_dot_change(fb, dot.second, old_dot_p1, old_dot_p2, new_p1, new_p2);
         prev_dot_end = recompute_position_after_dot_change(fb, position(row, pos1 + sm.length(0)+offset), old_dot_p1, old_dot_p2, new_p1, new_p2);
